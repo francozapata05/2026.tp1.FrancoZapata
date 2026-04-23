@@ -5,11 +5,11 @@
 
 ### Datos del Alumno
 
-| Campo | Respuesta |
-| :--- | :--- |
-| **Nombre** | |
-| **Apellido** | |
-| **Legajo** | |
+| Campo | Respuesta      |
+| :--- |:---------------|
+| **Nombre** | Franco Agustín |
+| **Apellido** | Zapata         |
+| **Legajo** | 63.182         |
 
 > **Fecha de entrega:** 28 de Abril de 2026
 
