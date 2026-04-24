@@ -8,16 +8,23 @@ import java.util.Map;
 import java.util.Optional;
 
 public class SocioRepositoryImpl implements SocioRepository {
-    private final Map<String, Socio> almacen = new HashMap<>();
+    private final Map<Integer, Socio> almacen = new HashMap<>();
 
     @Override
     public void guardar(Socio socio) {
-        almacen.put(socio.getDni(), socio);
+        almacen.put(socio.getId(), socio);
     }
 
     @Override
-    public Optional<Socio> buscarPorId(String dni) {
-        return Optional.ofNullable(almacen.get(dni));
+    public Optional<Socio> buscarPorId(Integer id) {
+        return Optional.ofNullable(almacen.get(id));
+    }
+
+    @Override
+    public Optional<Socio> buscarPorDni(String dni) {
+        return almacen.values().stream()
+                .filter(s -> s.getDni().equals(dni))
+                .findFirst();
     }
 
     @Override
