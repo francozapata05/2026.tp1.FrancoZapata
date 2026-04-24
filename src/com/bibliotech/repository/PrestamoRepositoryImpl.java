@@ -16,6 +16,11 @@ public class PrestamoRepositoryImpl implements PrestamoRepository {
     }
 
     @Override
+    public void actualizar(Prestamo prestamo) {
+        almacen.put(prestamo.id(), prestamo);
+    }
+
+    @Override
     public Optional<Prestamo> buscarPorId(Integer id) {
         return Optional.ofNullable(almacen.get(id));
     }
@@ -28,12 +33,14 @@ public class PrestamoRepositoryImpl implements PrestamoRepository {
     @Override
     public boolean estaDisponible(String isbn) {
         return almacen.values().stream()
+                .filter(p -> p.fechaDevolucionReal().isEmpty())
                 .noneMatch(p -> p.libro().isbn().equals(isbn));
     }
 
     @Override
     public long contarPrestamosSocio(String dni) {
         return almacen.values().stream()
+                .filter(p -> p.fechaDevolucionReal().isEmpty())
                 .filter(p -> p.socio().getDni().equals(dni))
                 .count();
     }
