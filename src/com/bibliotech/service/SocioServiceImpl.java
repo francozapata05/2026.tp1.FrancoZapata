@@ -14,7 +14,7 @@ public class SocioServiceImpl implements SocioService {
 
     @Override
     public void registrar(Socio socio) throws DniDuplicadoException, EmailInvalidoException {
-        if (repositorio.buscarPorId(socio.getDni()).isPresent()) {
+        if (repositorio.buscarPorDni(socio.getDni()).isPresent()) {
             throw new DniDuplicadoException(socio.getDni());
         }
         if (!emailValido(socio.getEmail())) {
