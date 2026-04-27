@@ -34,7 +34,7 @@ public class PrestamoRepositoryImpl implements PrestamoRepository {
     public boolean estaDisponible(String isbn) {
         return prestamoRepo.values().stream()
                 .filter(p -> p.fechaDevolucionReal().isEmpty())
-                .noneMatch(p -> p.libro().isbn().equals(isbn));
+                .noneMatch(p -> p.recurso().isbn().equals(isbn));
     }
 
     @Override

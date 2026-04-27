@@ -4,8 +4,8 @@ import com.bibliotech.exception.LibroNoDisponibleException;
 import com.bibliotech.exception.LimitePrestamosException;
 import com.bibliotech.exception.PrestamoNoEncontradoException;
 import com.bibliotech.exception.SocioSancionadoException;
-import com.bibliotech.model.Libro;
 import com.bibliotech.model.Prestamo;
+import com.bibliotech.model.Recurso;
 import com.bibliotech.model.Sancion;
 import com.bibliotech.model.Socio;
 import com.bibliotech.model.TipoTransaccion;
@@ -31,20 +31,20 @@ public class PrestamoServiceImpl implements PrestamoService {
     }
 
     @Override
-    public Prestamo realizarPrestamo(Libro libro, Socio socio) throws LibroNoDisponibleException, LimitePrestamosException, SocioSancionadoException {
+    public Prestamo realizarPrestamo(Recurso recurso, Socio socio) throws LibroNoDisponibleException, LimitePrestamosException, SocioSancionadoException {
         Optional<Sancion> sancionActiva = sancionRepositorio.buscarSancionActiva(socio.getId());
         if (sancionActiva.isPresent()) {
             throw new SocioSancionadoException(socio.getDni(), sancionActiva.get().fechaFin());
         }
-        if (!repositorio.estaDisponible(libro.isbn())) {
-            throw new LibroNoDisponibleException(libro.isbn());
+        if (!repositorio.estaDisponible(recurso.isbn())) {
+            throw new LibroNoDisponibleException(recurso.isbn());
         }
         if (repositorio.contarPrestamosSocio(socio.getDni()) >= socio.getLimitePrestamos()) {
             throw new LimitePrestamosException(socio.getDni(), socio.getLimitePrestamos());
         }
         Prestamo prestamo = new Prestamo(
                 generarId(),
-                libro,
+                recurso,
                 socio,
                 LocalDate.now(),
                 LocalDate.now().plusDays(14),
@@ -74,7 +74,7 @@ public class PrestamoServiceImpl implements PrestamoService {
 
         Prestamo devuelto = new Prestamo(
                 prestamo.id(),
-                prestamo.libro(),
+                prestamo.recurso(),
                 prestamo.socio(),
                 prestamo.fechaPrestamo(),
                 prestamo.fechaDevolucionEsperada(),

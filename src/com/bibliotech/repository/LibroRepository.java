@@ -1,6 +1,6 @@
 package com.bibliotech.repository;
 
-import com.bibliotech.model.Libro;
+import com.bibliotech.model.Recurso;
 
-public interface LibroRepository extends Repository<Libro, String> {
+public interface LibroRepository extends Repository<Recurso, String> {
 }

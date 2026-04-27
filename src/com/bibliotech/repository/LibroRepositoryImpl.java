@@ -1,6 +1,6 @@
 package com.bibliotech.repository;
 
-import com.bibliotech.model.Libro;
+import com.bibliotech.model.Recurso;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,20 +8,20 @@ import java.util.Map;
 import java.util.Optional;
 
 public class LibroRepositoryImpl implements LibroRepository {
-    private final Map<String, Libro> libroRepo = new HashMap<>();
+    private final Map<String, Recurso> libroRepo = new HashMap<>();
 
     @Override
-    public void guardar(Libro libro) {
-        libroRepo.put(libro.isbn(), libro);
+    public void guardar(Recurso recurso) {
+        libroRepo.put(recurso.isbn(), recurso);
     }
 
     @Override
-    public Optional<Libro> buscarPorId(String isbn) {
+    public Optional<Recurso> buscarPorId(String isbn) {
         return Optional.ofNullable(libroRepo.get(isbn));
     }
 
     @Override
-    public List<Libro> buscarTodos() {
+    public List<Recurso> buscarTodos() {
         return new ArrayList<>(libroRepo.values());
     }
 }
