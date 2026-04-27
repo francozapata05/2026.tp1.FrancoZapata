@@ -3,29 +3,39 @@ package com.bibliotech.service;
 import com.bibliotech.exception.LibroNoDisponibleException;
 import com.bibliotech.exception.LimitePrestamosException;
 import com.bibliotech.exception.PrestamoNoEncontradoException;
+import com.bibliotech.exception.SocioSancionadoException;
 import com.bibliotech.model.Libro;
 import com.bibliotech.model.Prestamo;
+import com.bibliotech.model.Sancion;
 import com.bibliotech.model.Socio;
 import com.bibliotech.model.TipoTransaccion;
 import com.bibliotech.model.Transaccion;
 import com.bibliotech.repository.PrestamoRepository;
+import com.bibliotech.repository.SancionRepository;
 import com.bibliotech.repository.TransaccionRepository;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 public class PrestamoServiceImpl implements PrestamoService {
     private final PrestamoRepository repositorio;
     private final TransaccionRepository transaccionRepositorio;
+    private final SancionRepository sancionRepositorio;
 
-    public PrestamoServiceImpl(PrestamoRepository repositorio, TransaccionRepository transaccionRepositorio) {
+    public PrestamoServiceImpl(PrestamoRepository repositorio, TransaccionRepository transaccionRepositorio, SancionRepository sancionRepositorio) {
         this.repositorio = repositorio;
         this.transaccionRepositorio = transaccionRepositorio;
+        this.sancionRepositorio = sancionRepositorio;
     }
 
     @Override
-    public Prestamo realizarPrestamo(Libro libro, Socio socio) throws LibroNoDisponibleException, LimitePrestamosException {
+    public Prestamo realizarPrestamo(Libro libro, Socio socio) throws LibroNoDisponibleException, LimitePrestamosException, SocioSancionadoException {
+        Optional<Sancion> sancionActiva = sancionRepositorio.buscarSancionActiva(socio.getId());
+        if (sancionActiva.isPresent()) {
+            throw new SocioSancionadoException(socio.getDni(), sancionActiva.get().fechaFin());
+        }
         if (!repositorio.estaDisponible(libro.isbn())) {
             throw new LibroNoDisponibleException(libro.isbn());
         }
@@ -33,7 +43,7 @@ public class PrestamoServiceImpl implements PrestamoService {
             throw new LimitePrestamosException(socio.getDni(), socio.getLimitePrestamos());
         }
         Prestamo prestamo = new Prestamo(
-                repositorio.buscarTodos().size() + 1,
+                generarId(),
                 libro,
                 socio,
                 LocalDate.now(),
@@ -50,8 +60,12 @@ public class PrestamoServiceImpl implements PrestamoService {
         return prestamo;
     }
 
+    private static long generarId() {
+        return System.currentTimeMillis() * 10000 + new Random().nextInt(10000);
+    }
+
     @Override
-    public long registrarDevolucion(int prestamoId) throws PrestamoNoEncontradoException {
+    public long registrarDevolucion(long prestamoId) throws PrestamoNoEncontradoException {
         Prestamo prestamo = repositorio.buscarPorId(prestamoId)
                 .orElseThrow(() -> new PrestamoNoEncontradoException(prestamoId));
 
@@ -73,6 +87,18 @@ public class PrestamoServiceImpl implements PrestamoService {
                 devuelto,
                 fechaReal
         ));
+
+        if (diasRetraso > 0) {
+            List<Sancion> sancionesPrevias = sancionRepositorio.buscarPorSocio(prestamo.socio().getId());
+            int duracion = sancionesPrevias.size() >= 3 ? 30 : (int) diasRetraso;
+            sancionRepositorio.guardar(new Sancion(
+                    sancionesPrevias.size() + 1,
+                    prestamo.socio(),
+                    fechaReal,
+                    fechaReal.plusDays(duracion)
+            ));
+        }
+
         return diasRetraso;
     }
 
@@ -84,5 +110,10 @@ public class PrestamoServiceImpl implements PrestamoService {
     @Override
     public List<Prestamo> obtenerTodosLosPrestamos() {
         return repositorio.buscarTodos();
+    }
+
+    @Override
+    public List<Sancion> obtenerSanciones(int socioId) {
+        return sancionRepositorio.buscarPorSocio(socioId);
     }
 }
