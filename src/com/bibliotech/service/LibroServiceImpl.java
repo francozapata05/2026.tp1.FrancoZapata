@@ -2,7 +2,7 @@ package com.bibliotech.service;
 
 import com.bibliotech.exception.LibroNoEncontradoException;
 import com.bibliotech.model.Categoria;
-import com.bibliotech.model.Libro;
+import com.bibliotech.model.Recurso;
 import com.bibliotech.repository.LibroRepository;
 import java.util.List;
 
@@ -14,27 +14,27 @@ public class LibroServiceImpl implements LibroService {
     }
 
     @Override
-    public List<Libro> buscarPorTitulo(String titulo) throws LibroNoEncontradoException {
-        List<Libro> resultado = repositorio.buscarTodos().stream()
-                .filter(l -> l.titulo().toLowerCase().contains(titulo.toLowerCase()))
+    public List<Recurso> buscarPorTitulo(String titulo) throws LibroNoEncontradoException {
+        List<Recurso> resultado = repositorio.buscarTodos().stream()
+                .filter(r -> r.titulo().toLowerCase().contains(titulo.toLowerCase()))
                 .toList();
         if (resultado.isEmpty()) throw new LibroNoEncontradoException("título", titulo);
         return resultado;
     }
 
     @Override
-    public List<Libro> buscarPorAutor(String autor) throws LibroNoEncontradoException {
-        List<Libro> resultado = repositorio.buscarTodos().stream()
-                .filter(l -> l.autor().toLowerCase().contains(autor.toLowerCase()))
+    public List<Recurso> buscarPorAutor(String autor) throws LibroNoEncontradoException {
+        List<Recurso> resultado = repositorio.buscarTodos().stream()
+                .filter(r -> r.autor().toLowerCase().contains(autor.toLowerCase()))
                 .toList();
         if (resultado.isEmpty()) throw new LibroNoEncontradoException("autor", autor);
         return resultado;
     }
 
     @Override
-    public List<Libro> buscarPorCategoria(Categoria categoria) throws LibroNoEncontradoException {
-        List<Libro> resultado = repositorio.buscarTodos().stream()
-                .filter(l -> l.categoria() == categoria)
+    public List<Recurso> buscarPorCategoria(Categoria categoria) throws LibroNoEncontradoException {
+        List<Recurso> resultado = repositorio.buscarTodos().stream()
+                .filter(r -> r.categoria() == categoria)
                 .toList();
         if (resultado.isEmpty()) throw new LibroNoEncontradoException("categoría", categoria.name());
         return resultado;
