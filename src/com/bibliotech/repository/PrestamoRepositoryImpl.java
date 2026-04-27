@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class PrestamoRepositoryImpl implements PrestamoRepository {
-    private final Map<Integer, Prestamo> prestamoRepo = new HashMap<>();
+    private final Map<Long, Prestamo> prestamoRepo = new HashMap<>();
 
     @Override
     public void guardar(Prestamo prestamo) {
@@ -21,7 +21,7 @@ public class PrestamoRepositoryImpl implements PrestamoRepository {
     }
 
     @Override
-    public Optional<Prestamo> buscarPorId(Integer id) {
+    public Optional<Prestamo> buscarPorId(Long id) {
         return Optional.ofNullable(prestamoRepo.get(id));
     }
 

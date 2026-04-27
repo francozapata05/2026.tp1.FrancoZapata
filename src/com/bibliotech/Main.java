@@ -6,15 +6,18 @@ import com.bibliotech.exception.LibroNoDisponibleException;
 import com.bibliotech.exception.LibroNoEncontradoException;
 import com.bibliotech.exception.LimitePrestamosException;
 import com.bibliotech.exception.PrestamoNoEncontradoException;
+import com.bibliotech.exception.SocioSancionadoException;
 import com.bibliotech.model.Categoria;
 import com.bibliotech.model.Docente;
 import com.bibliotech.model.Estudiante;
 import com.bibliotech.model.Libro;
 import com.bibliotech.model.Prestamo;
+import com.bibliotech.model.Sancion;
 import com.bibliotech.model.Socio;
 import com.bibliotech.model.Transaccion;
 import com.bibliotech.repository.LibroRepositoryImpl;
 import com.bibliotech.repository.PrestamoRepositoryImpl;
+import com.bibliotech.repository.SancionRepositoryImpl;
 import com.bibliotech.repository.SocioRepositoryImpl;
 import com.bibliotech.repository.TransaccionRepositoryImpl;
 import com.bibliotech.service.LibroService;
@@ -27,6 +30,7 @@ import com.bibliotech.service.SocioServiceImpl;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 public class Main {
 
@@ -36,10 +40,11 @@ public class Main {
         LibroRepositoryImpl libroRepo = new LibroRepositoryImpl();
         PrestamoRepositoryImpl prestamoRepo = new PrestamoRepositoryImpl();
         TransaccionRepositoryImpl transaccionRepo = new TransaccionRepositoryImpl();
+        SancionRepositoryImpl sancionRepo = new SancionRepositoryImpl();
 
         SocioService socioService = new SocioServiceImpl(socioRepo);
         LibroService libroService = new LibroServiceImpl(libroRepo);
-        PrestamoService prestamoService = new PrestamoServiceImpl(prestamoRepo, transaccionRepo);
+        PrestamoService prestamoService = new PrestamoServiceImpl(prestamoRepo, transaccionRepo, sancionRepo);
 
         System.out.println("=== BiblioTech - Sistema de Gestión de Biblioteca ===\n");
 
@@ -113,8 +118,9 @@ public class Main {
 
         // --- 4. Préstamos ---
         System.out.println("\n--- Préstamos ---");
+        Prestamo p1 = null;
         try {
-            Prestamo p1 = prestamoService.realizarPrestamo(libro1, estudiante);
+            p1 = prestamoService.realizarPrestamo(libro1, estudiante);
             System.out.println("Préstamo registrado: '" + p1.libro().titulo() + "' para " + p1.socio().getNombre() + " (vence: " + p1.fechaDevolucionEsperada() + ")");
 
             Prestamo p2 = prestamoService.realizarPrestamo(libro2, estudiante);
@@ -122,7 +128,7 @@ public class Main {
 
             Prestamo p3 = prestamoService.realizarPrestamo(libro3, docente);
             System.out.println("Préstamo registrado: '" + p3.libro().titulo() + "' para " + p3.socio().getNombre() + " (vence: " + p3.fechaDevolucionEsperada() + ")");
-        } catch (LibroNoDisponibleException | LimitePrestamosException e) {
+        } catch (LibroNoDisponibleException | LimitePrestamosException | SocioSancionadoException e) {
             System.out.println("Error al realizar préstamo: " + e.getMessage());
         }
 
@@ -132,7 +138,7 @@ public class Main {
             prestamoService.realizarPrestamo(libro1, docente);
         } catch (LibroNoDisponibleException e) {
             System.out.println("Error esperado - Libro no disponible: " + e.getMessage());
-        } catch (LimitePrestamosException e) {
+        } catch (LimitePrestamosException | SocioSancionadoException e) {
             System.out.println("Error al realizar préstamo: " + e.getMessage());
         }
 
@@ -149,14 +155,14 @@ public class Main {
             prestamoService.realizarPrestamo(libro5, estudiante);
         } catch (LimitePrestamosException e) {
             System.out.println("Error esperado - Límite alcanzado: " + e.getMessage());
-        } catch (LibroNoDisponibleException e) {
+        } catch (LibroNoDisponibleException | SocioSancionadoException e) {
             System.out.println("Error al realizar préstamo: " + e.getMessage());
         }
 
         // --- 5. Devolución ---
         System.out.println("\n--- Devolución ---");
         try {
-            long diasRetraso = prestamoService.registrarDevolucion(1);
+            long diasRetraso = prestamoService.registrarDevolucion(p1.id());
             if (diasRetraso > 0) {
                 System.out.println("Devolución registrada. Días de retraso: " + diasRetraso);
             } else {
@@ -173,27 +179,72 @@ public class Main {
             System.out.println("Error esperado - Préstamo no encontrado: " + e.getMessage());
         }
 
-        // --- 6. Devolución con retraso ---
-        System.out.println("\n--- Devolución con retraso ---");
-        Libro libroAtrasado = new Libro("978-0-06-093546-9", "El Gran Gatsby", "F. Scott Fitzgerald", 1925, Categoria.FICCION);
-        libroRepo.guardar(libroAtrasado);
-        Prestamo prestamoAtrasado = new Prestamo(
-                prestamoRepo.buscarTodos().size() + 1,
-                libroAtrasado,
-                docente,
-                LocalDate.now().minusDays(20),
-                LocalDate.now().minusDays(5),
-                Optional.empty()
-        );
-        prestamoRepo.guardar(prestamoAtrasado);
+        // --- 6. Sistema de sanciones (3 strikes → mes de suspensión) ---
+        System.out.println("\n--- Sistema de sanciones por devolución tardía ---");
+
+        Random rnd = new Random();
+
+        // Strike 1: 5 días de retraso → sanción de 5 días
+        Libro libroS1 = new Libro("978-0-06-093546-9", "El Gran Gatsby", "F. Scott Fitzgerald", 1925, Categoria.FICCION);
+        libroRepo.guardar(libroS1);
+        Prestamo ps1 = new Prestamo(System.currentTimeMillis() * 10000 + rnd.nextInt(10000), libroS1, docente,
+                LocalDate.now().minusDays(20), LocalDate.now().minusDays(5), Optional.empty());
+        prestamoRepo.guardar(ps1);
+
+        // Strike 2: 3 días de retraso → sanción de 3 días
+        Libro libroS2 = new Libro("978-0-14-243-7001-2", "Don Quijote", "Miguel de Cervantes", 1605, Categoria.FICCION);
+        libroRepo.guardar(libroS2);
+        Prestamo ps2 = new Prestamo(System.currentTimeMillis() * 10000 + rnd.nextInt(10000), libroS2, docente,
+                LocalDate.now().minusDays(15), LocalDate.now().minusDays(3), Optional.empty());
+        prestamoRepo.guardar(ps2);
+
+        // Strike 3: 7 días de retraso → sanción de 7 días
+        Libro libroS3 = new Libro("978-0-14-310-4381-3", "Hamlet", "William Shakespeare", 1603, Categoria.FICCION);
+        libroRepo.guardar(libroS3);
+        Prestamo ps3 = new Prestamo(System.currentTimeMillis() * 10000 + rnd.nextInt(10000), libroS3, docente,
+                LocalDate.now().minusDays(25), LocalDate.now().minusDays(7), Optional.empty());
+        prestamoRepo.guardar(ps3);
+
+        // Strike 4: 2 días de retraso → sanción de 30 días (mes de suspensión)
+        Libro libroS4 = new Libro("978-0-14-044-9564-4", "La Odisea", "Homero", -800, Categoria.FICCION);
+        libroRepo.guardar(libroS4);
+        Prestamo ps4 = new Prestamo(System.currentTimeMillis() * 10000 + rnd.nextInt(10000), libroS4, docente,
+                LocalDate.now().minusDays(10), LocalDate.now().minusDays(2), Optional.empty());
+        prestamoRepo.guardar(ps4);
+
         try {
-            long diasRetraso = prestamoService.registrarDevolucion(prestamoAtrasado.id());
-            System.out.println("Devolución registrada con " + diasRetraso + " días de retraso.");
+            long r1 = prestamoService.registrarDevolucion(ps1.id());
+            System.out.println("Strike 1: " + r1 + " días de retraso → sancionado " + r1 + " días.");
+            long r2 = prestamoService.registrarDevolucion(ps2.id());
+            System.out.println("Strike 2: " + r2 + " días de retraso → sancionado " + r2 + " días.");
+            long r3 = prestamoService.registrarDevolucion(ps3.id());
+            System.out.println("Strike 3: " + r3 + " días de retraso → sancionado " + r3 + " días.");
+            long r4 = prestamoService.registrarDevolucion(ps4.id());
+            System.out.println("Strike 4: " + r4 + " días de retraso → 3 strikes previos, sancionado 30 días.");
         } catch (PrestamoNoEncontradoException e) {
             System.out.println("Error al registrar devolución: " + e.getMessage());
         }
 
-        // --- 7. Listado de todos los préstamos ---
+        // --- 7. Sanciones por devolución tardía ---
+        System.out.println("\n--- Sanción aplicada a Carlos ---");
+        List<Sancion> sanciones = prestamoService.obtenerSanciones(docente.getId());
+        for (Sancion s : sanciones) {
+            System.out.println("  Sancionado desde " + s.fechaInicio() + " hasta " + s.fechaFin());
+        }
+
+        // Intento de préstamo con sanción activa
+        System.out.println("\n--- Préstamo con sanción activa ---");
+        try {
+            Libro libroExtra = new Libro("978-0-7432-7356-5", "Harry Potter", "J.K. Rowling", 1997, Categoria.FICCION);
+            libroRepo.guardar(libroExtra);
+            prestamoService.realizarPrestamo(libroExtra, docente);
+        } catch (SocioSancionadoException e) {
+            System.out.println("Error esperado - " + e.getMessage());
+        } catch (LibroNoDisponibleException | LimitePrestamosException e) {
+            System.out.println("Error al realizar préstamo: " + e.getMessage());
+        }
+
+        // --- 8. Listado de todos los préstamos ---
         System.out.println("\n--- Todos los préstamos ---");
         List<Prestamo> todos = prestamoService.obtenerTodosLosPrestamos();
         for (Prestamo p : todos) {
@@ -201,7 +252,7 @@ public class Main {
             System.out.println("  [" + estado + "] '" + p.libro().titulo() + "' - " + p.socio().getNombre() + " " + p.socio().getApellido());
         }
 
-        // --- 9. Historial de transacciones ---
+        // --- 9. Historial de transacciones de Ana ---
         System.out.println("\n--- Historial de transacciones de Ana ---");
         List<Transaccion> historial = prestamoService.obtenerHistorial(estudiante.getId());
         for (Transaccion t : historial) {
