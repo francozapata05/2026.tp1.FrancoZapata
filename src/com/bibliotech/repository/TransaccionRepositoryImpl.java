@@ -5,16 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TransaccionRepositoryImpl implements TransaccionRepository {
-    private final List<Transaccion> historial = new ArrayList<>();
+    private final List<Transaccion> transaccionRepo = new ArrayList<>();
 
     @Override
     public void guardar(Transaccion transaccion) {
-        historial.add(transaccion);
+        transaccionRepo.add(transaccion);
     }
 
     @Override
     public List<Transaccion> buscarPorSocio(int socioId) {
-        return historial.stream()
+        return transaccionRepo.stream()
                 .filter(t -> t.prestamo().socio().getId() == socioId)
                 .toList();
     }
