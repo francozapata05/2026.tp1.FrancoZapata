@@ -8,20 +8,20 @@ import java.util.Map;
 import java.util.Optional;
 
 public class LibroRepositoryImpl implements LibroRepository {
-    private final Map<String, Libro> almacen = new HashMap<>();
+    private final Map<String, Libro> libroRepo = new HashMap<>();
 
     @Override
     public void guardar(Libro libro) {
-        almacen.put(libro.isbn(), libro);
+        libroRepo.put(libro.isbn(), libro);
     }
 
     @Override
     public Optional<Libro> buscarPorId(String isbn) {
-        return Optional.ofNullable(almacen.get(isbn));
+        return Optional.ofNullable(libroRepo.get(isbn));
     }
 
     @Override
     public List<Libro> buscarTodos() {
-        return new ArrayList<>(almacen.values());
+        return new ArrayList<>(libroRepo.values());
     }
 }

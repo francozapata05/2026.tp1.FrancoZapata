@@ -8,38 +8,38 @@ import java.util.Map;
 import java.util.Optional;
 
 public class PrestamoRepositoryImpl implements PrestamoRepository {
-    private final Map<Integer, Prestamo> almacen = new HashMap<>();
+    private final Map<Integer, Prestamo> prestamoRepo = new HashMap<>();
 
     @Override
     public void guardar(Prestamo prestamo) {
-        almacen.put(prestamo.id(), prestamo);
+        prestamoRepo.put(prestamo.id(), prestamo);
     }
 
     @Override
     public void actualizar(Prestamo prestamo) {
-        almacen.put(prestamo.id(), prestamo);
+        prestamoRepo.put(prestamo.id(), prestamo);
     }
 
     @Override
     public Optional<Prestamo> buscarPorId(Integer id) {
-        return Optional.ofNullable(almacen.get(id));
+        return Optional.ofNullable(prestamoRepo.get(id));
     }
 
     @Override
     public List<Prestamo> buscarTodos() {
-        return new ArrayList<>(almacen.values());
+        return new ArrayList<>(prestamoRepo.values());
     }
 
     @Override
     public boolean estaDisponible(String isbn) {
-        return almacen.values().stream()
+        return prestamoRepo.values().stream()
                 .filter(p -> p.fechaDevolucionReal().isEmpty())
                 .noneMatch(p -> p.libro().isbn().equals(isbn));
     }
 
     @Override
     public long contarPrestamosSocio(String dni) {
-        return almacen.values().stream()
+        return prestamoRepo.values().stream()
                 .filter(p -> p.fechaDevolucionReal().isEmpty())
                 .filter(p -> p.socio().getDni().equals(dni))
                 .count();
