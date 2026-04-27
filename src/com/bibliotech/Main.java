@@ -3,6 +3,7 @@ package com.bibliotech;
 import com.bibliotech.exception.DniDuplicadoException;
 import com.bibliotech.exception.EmailInvalidoException;
 import com.bibliotech.exception.LibroNoDisponibleException;
+import com.bibliotech.exception.LibroNoEncontradoException;
 import com.bibliotech.exception.LimitePrestamosException;
 import com.bibliotech.exception.PrestamoNoEncontradoException;
 import com.bibliotech.model.Categoria;
@@ -90,14 +91,25 @@ public class Main {
 
         // --- 3. Búsqueda de libros ---
         System.out.println("\n--- Búsqueda de libros ---");
-        List<Libro> porAutor = libroService.buscarPorAutor("Harari");
-        System.out.println("Búsqueda por autor 'Harari': " + porAutor.getFirst().titulo());
+        try {
+            List<Libro> porAutor = libroService.buscarPorAutor("Harari");
+            System.out.println("Búsqueda por autor 'Harari': " + porAutor.getFirst().titulo());
 
-        List<Libro> porCategoria = libroService.buscarPorCategoria(Categoria.TECNOLOGIA);
-        System.out.println("Búsqueda por categoría TECNOLOGÍA: " + porCategoria.getFirst().titulo());
+            List<Libro> porCategoria = libroService.buscarPorCategoria(Categoria.TECNOLOGIA);
+            System.out.println("Búsqueda por categoría TECNOLOGÍA: " + porCategoria.getFirst().titulo());
 
-        List<Libro> porTitulo = libroService.buscarPorTitulo("Clean Code");
-        System.out.println("Búsqueda por título 'Clean Code': " + porTitulo.getFirst().titulo());
+            List<Libro> porTitulo = libroService.buscarPorTitulo("Clean Code");
+            System.out.println("Búsqueda por título 'Clean Code': " + porTitulo.getFirst().titulo());
+        } catch (LibroNoEncontradoException e) {
+            System.out.println("Error al buscar libro: " + e.getMessage());
+        }
+
+        // Búsqueda de libro inexistente
+        try {
+            libroService.buscarPorAutor("Autor Inexistente");
+        } catch (LibroNoEncontradoException e) {
+            System.out.println("Error esperado - " + e.getMessage());
+        }
 
         // --- 4. Préstamos ---
         System.out.println("\n--- Préstamos ---");
