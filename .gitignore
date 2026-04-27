@@ -2,6 +2,10 @@
 out/
 .idea/
 *.iml
+!BiblioTech.iml
+
+### Datos de persistencia (generados en runtime) ###
+data/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .kotlin
